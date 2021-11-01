@@ -20,7 +20,7 @@ import datetime as dt
 
 class LSTMModel:
 
-  def __init__(self, dir, N_PERIOD = 1, timestep = 10, number_of_days_pred = 20, model = None, mode = 'new'):
+  def __init__(self, dir, model_name, mode = 'new', N_PERIOD = 1, timestep = 10, number_of_days_pred = 20):
     self.targets = ['close']
     self.third_halving = '2020-05-11'
     if mode == 'new':
@@ -31,7 +31,7 @@ class LSTMModel:
       self.top_features = self.selectFeatures()
       self.X_test, self.y_test, self.X_train, self.y_train = self.train_test_prep()
       self.model = self.create_model(64, LSTM)
-      self.fit_model = self.fit_model()
+      self.fit_model = self.fit_model(model_name)
     else:
       self.df = self.create_df(dir)
       self.n = number_of_days_pred
@@ -39,7 +39,7 @@ class LSTMModel:
       self.timestep = timestep
       self.top_features = self.selectFeatures()
       self.X_test, self.y_test, self.X_train, self.y_train = self.train_test_prep()
-      self.model = model
+      self.model = self.load_model(model_name)
       
   def create_df(self, dir):
     df=pd.read_csv(dir)
@@ -155,7 +155,7 @@ class LSTMModel:
       return model
 
   #Fit model
-  def fit_model(self):
+  def fit_model(self, model_name):
       #save_checkpoint = tf.keras.callbacks.ModelCheckpoint('saved_models/lstm_price_predictor',
       #                              save_format='tf',
         #                              monitor='val_accuracy',
@@ -170,7 +170,7 @@ class LSTMModel:
       # Set shuffle equal to False due to importance of oder for this dataset
       history = self.model.fit(self.X_train, self.y_train, epochs = 100, validation_split = 0.2,
                       batch_size = 32, shuffle = False, callbacks = [early_stop])
-      tf.keras.models.save_model(self.model, "saved_model/lstm_price_predictor.hp5", save_format="h5")
+      tf.keras.models.save_model(self.model, model_name, save_format="h5")
       return history
 
   # def load_model(self,file):
@@ -249,12 +249,17 @@ class LSTMModel:
       return_pred = pd.DataFrame(prediction_actual)
       return_pred.index = self.date_index[-n:]
       return return_pred
-      
-# In[3]:
 
+  def load_model(self, model_name):
+    model = tf.keras.models.load_model(model_name)
+    return model
+        
 
-#Lstm_obj = LSTMModel('/content/sample_data/btc_metrics_raw.csv')
+# Lstm_obj = LSTMModel('../btc_metrics_raw.csv', '../pretrained_models/lstm_price_predictor.hp5')
 
+# LSTM_obj1 = LSTMModel('../btc_metrics_raw.csv','../pretrained_models/lstm_price_predictor.hp5', 'load')
+# prediction = LSTM_obj1.forecast()
+# print(prediction)
 
 # In[4]:
 

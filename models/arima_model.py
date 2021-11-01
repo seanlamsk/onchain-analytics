@@ -11,14 +11,14 @@ warnings.filterwarnings('ignore')
 from statsmodels.tsa.arima.model import ARIMA, ARIMAResults
 
 class ArimaModel:
-  def __init__(self, dir, N_Pred_Period, model=None, mode='new'):
+  def __init__(self, dir, N_Pred_Period, model_name, mode='new'):
     if mode == 'new':
-      self.df = create_df(dir)['close']
-      self.model = self.arima_modeling()
+      self.df = self.create_df(dir)['close']
+      self.model = self.arima_modeling(model_name)
       self.n = N_Pred_Period
     else:
-      self.df = create_df(dir)['close']
-      self.model = model
+      self.df = self.create_df(dir)['close']
+      self.model = self.load_model(model_name)
       self.n = N_Pred_Period
     
   def ad_test(self):
@@ -48,11 +48,11 @@ class ArimaModel:
     best_order=get_parametes['order']
     return best_order
     
-  def arima_modeling(self):
+  def arima_modeling(self, model_name):
     configuration = self.auto_arima_test()
     model = ARIMA(self.df, order = configuration)
     model_fit = model.fit()
-    model_fit.save('arimamodel.pkl')
+    model_fit.save(model_name)
     return model_fit
     
   def arima_pred(self):
@@ -60,14 +60,15 @@ class ArimaModel:
     end = start + dt.timedelta(days=self.n)
     index_future_dates = pd.date_range(start = start, end = end)
     pred = self.model.predict(start = 0, end=len(self.df)+self.n, typ = 'levels').rename('ARIMA Next ' + str(self.n) + ' days Predictions')
-    new_index = np.concatenate((df.index, index_future_dates), axis=None)
+    new_index = np.concatenate((self.df.index, index_future_dates), axis=None)
     pred.index = new_index
     return pred
 
-  def load_model(self, model):
-    self.model = model
+  def load_model(self, model_name):
+    model = ARIMAResults.load(model_name)
+    return model
 
-Arima_Obj = ArimaModel('/content/sample_data/btc_metrics_raw.csv', 30)
-loaded = ARIMAResults.load('arimamodel.pkl')
-pred = ArimaModel('/content/sample_data/btc_metrics_raw.csv', 30, loaded, 'load').arima_pred()
-pred.plot(figsize=(12,5), legend=True)
+# Arima_Obj = ArimaModel('../btc_metrics_raw.csv', 30, '../pretrained_models/arimamodeltest.pkl')
+# pred = ArimaModel('../btc_metrics_raw.csv', 30, '../pretrained_models/arimamodeltest.pkl', 'load').arima_pred()
+# print(pred)
+# pred.plot(figsize=(12,5), legend=True)
