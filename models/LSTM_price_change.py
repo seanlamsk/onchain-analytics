@@ -20,11 +20,11 @@ from sklearn.metrics import classification_report
 
 
 class LSTMPriceChangeModel:
-    def __init__(self, file_name, N_PERIOD=7, N_BINS=1):
+    def __init__(self, file_name, N_PERIOD=1, N_BINS=7):
 
         #GLOBAL PARAMETERS
-        self.N_PERIOD = 7 #lookahead target label
-        self.N_BINS = 1 #number of target variable bins
+        self.N_PERIOD = N_PERIOD #lookahead target label
+        self.N_BINS = N_BINS #number of target variable bins
 
         """# Dataset Setup
         *   create target variables (% change bins ahead of n_period)
@@ -68,10 +68,13 @@ class LSTMPriceChangeModel:
         for cc_target in targets:
 
             numeric_cols = list(self.df.select_dtypes(include=['float','int']).columns)
-            exclusions = ['daily_change']
+            exclusions = ['daily_change','target']
 
-            if cc_target in numeric_cols and cc_target in exclusions:
+            if cc_target in numeric_cols:
                 numeric_cols.remove(cc_target)
+
+            for col in exclusions:
+                numeric_cols.remove(col)
 
             fig, axes = plt.subplots(7,3,figsize=(20,20))
             axes = axes.flatten()
@@ -86,7 +89,7 @@ class LSTMPriceChangeModel:
                 
                 eligible = reduce(lambda prev,shift: bool( shift+self.N_PERIOD <= threshold_shift and abs(sorted_corr_shift[shift+self.N_PERIOD]) >= threshold_corr) , sorted_corr_shift[:top_n])
 
-                print(f"{variable} eligible? {eligible} , ","Best cross corr shifts: ",sorted_corr_shift[:top_n])
+                # print(f"{variable} eligible? {eligible} , ","Best cross corr shifts: ",sorted_corr_shift[:top_n])
                 if eligible:
                     self.eligible_features.append(variable)
     
@@ -107,6 +110,7 @@ class LSTMPriceChangeModel:
 
         #perform feature selection
         self.feature_selection()
+        print("Eligible features",self.eligible_features)
 
         df2 = self.df.copy()
 
@@ -177,7 +181,7 @@ class LSTMPriceChangeModel:
         model.compile(loss='categorical_crossentropy', optimizer='adam', metrics=['accuracy',self.f1_metric])
         return model
 
-    def fit(self,epochs=1000):
+    def fit(self,save_dir,epochs=1000):
         """## Model Fit"""
         # #Callbacks
         # save_checkpoint = tf.keras.callbacks.ModelCheckpoint('saved_models/lstm_price_change',
@@ -198,7 +202,7 @@ class LSTMPriceChangeModel:
 
         self.history = self.model.fit(self.X_train,self.y_train,epochs=epochs,validation_split=0.05,callbacks=[early_stop])
 
-        tf.keras.models.save_model(self.model, "saved_model/lstm_price_change.hp5", save_format="h5")
+        tf.keras.models.save_model(self.model, save_dir, save_format="h5")
 
 
     def load_model(self,file):
