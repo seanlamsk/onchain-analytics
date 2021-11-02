@@ -55,20 +55,44 @@ class ArimaModel:
     model_fit.save(model_name)
     return model_fit
     
-  def arima_pred(self):
+  def arima_pred_all(self): #inclusive of past and future predictions
     start = self.df.index[-1].to_pydatetime('%Y-%m-%d') + dt.timedelta(days=1)
     end = start + dt.timedelta(days=self.n)
     index_future_dates = pd.date_range(start = start, end = end)
-    pred = self.model.predict(start = 0, end=len(self.df)+self.n, typ = 'levels').rename('ARIMA Next ' + str(self.n) + ' days Predictions')
+    pred = self.model.predict(start = 0, end=len(self.df)+self.n, typ = 'levels').rename('ARIMA')
     new_index = np.concatenate((self.df.index, index_future_dates), axis=None)
     pred.index = new_index
+    return pred
+
+  def arima_pred_future(self): #only future predictions
+    start = self.df.index[-1].to_pydatetime('%Y-%m-%d') + dt.timedelta(days=1)
+    end = start + dt.timedelta(days=self.n-1)
+    index_future_dates = pd.date_range(start = start, end = end)
+    pred = self.model.predict(start = len(self.df), end=len(self.df)+self.n-1, typ = 'levels').rename('ARIMA')
+    pred.index = index_future_dates
+    return pred
+  
+  def arima_pred_past_seven(self): #only past 7 days predictions
+    pred = self.model.predict(start = -7, typ = 'levels').rename('ARIMA')
     return pred
 
   def load_model(self, model_name):
     model = ARIMAResults.load(model_name)
     return model
 
-# Arima_Obj = ArimaModel('../btc_metrics_raw.csv', 30, '../pretrained_models/arimamodeltest.pkl')
-# pred = ArimaModel('../btc_metrics_raw.csv', 30, '../pretrained_models/arimamodeltest.pkl', 'load').arima_pred()
+  # def past_seven_days(self):
+  #   pred = self.model.predict(start = 0, end=len(self.df)+self.n, typ = 'levels').rename('ARIMA Next ' + str(self.n) + ' days Predictions')
+
+# Arima_Obj1 = ArimaModel('../btc_metrics_raw.csv', 10, '../models/saved_models/btc/arimamodel.pkl')
+# Arima_Obj2 = ArimaModel('../ltc_metrics_raw.csv', 10, '../models/saved_models/ltc/arimamodel.pkl')
+# Arima_Obj3 = ArimaModel('../eth_metrics_raw.csv', 10, '../models/saved_models/eth/arimamodel.pkl')
+# pred = ArimaModel('../btc_metrics_raw.csv', 10, '../models/saved_models/btc/arimamodel.pkl', 'load').arima_pred_all()
+# pred = ArimaModel('../btc_metrics_raw.csv', 10, '../models/saved_models/btc/arimamodel.pkl', 'load').arima_pred_future()
+# pred = ArimaModel('../eth_metrics_raw.csv', 10, '../models/saved_models/eth/arimamodel.pkl', 'load').arima_pred_future()
+
+# pred = ArimaModel('../btc_metrics_raw.csv', 10, '../models/saved_models/btc/arimamodel.pkl', 'load').arima_pred_past_seven()
+# pred = pred.to_frame().reset_index()#.rename(columns={'ARIMA': 'Price'}) 
 # print(pred)
+
+# print(pred.iloc[0])
 # pred.plot(figsize=(12,5), legend=True)
