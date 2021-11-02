@@ -50,9 +50,7 @@ eligible_features = []
 for cc_target in targets:
 
   numeric_cols = list(df.select_dtypes(include=['float','int']).columns)
-  exclusions = ['daily_change']
-
-  if cc_target in numeric_cols and cc_target in exclusions:
+  if cc_target in numeric_cols:
     numeric_cols.remove(cc_target)
 
   fig, axes = plt.subplots(7,3,figsize=(20,20))
@@ -76,6 +74,12 @@ for cc_target in targets:
     ax.set_xlabel('Day shift')
     ax.set_ylabel('Correlation')
     ax.set_title(f'Cross Corr: {cc_target} , {variable}')
+
+if 'daily_change' in eligible_features:
+  eligible_features.remove('daily_change')
+if 'target' in eligible_features:
+  eligible_features.remove('target')
+print('el:', eligible_features)
 
 
 # model input creation
@@ -101,10 +105,10 @@ rf.fit(X_train, y_train)
 y_pred_rf = rf.predict(X_test)
 print(classification_report(y_test,y_pred_dt))
 
-# Save model as pickle file
-pkl_filename = "randomforest.pkl"
-with open(pkl_filename, 'wb') as file:
-    pickle.dump(rf, file)
+# # Save model as pickle file
+# pkl_filename = "randomforest.pkl"
+# with open(pkl_filename, 'wb') as file:
+#     pickle.dump(rf, file)
 
 # # Load from file
 # with open(pkl_filename, 'rb') as file:
