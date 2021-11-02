@@ -1,11 +1,11 @@
 import dash
 from dash import dcc
+import dash_bootstrap_components as dbc
 from dash import html
 import plotly.express as px
 import pandas as pd
-from models.LSTM_price_change import LSTMPriceChangeModel
 
-from page1 import page1
+from PriceChangeForecast import PriceChangeForecast
 
 
 
@@ -14,64 +14,32 @@ from page1 import page1
 # doing something wrong.
 # In this case, we're adding the elements through a callback, so we can ignore
 # the exception.
-app = dash.Dash(__name__, suppress_callback_exceptions=True)
+app = dash.Dash(__name__, 
+suppress_callback_exceptions=True,
+external_stylesheets=[dbc.themes.BOOTSTRAP])
 
-page1 = page1(app)
+price_change_page = PriceChangeForecast(app)
 
 app.layout = html.Div([
+    html.H1('On Chain Analytics Dashboard'),
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content')
 ])
 
 index_page = html.Div([
-    dcc.Link('Go to Page 1', href='/page-1'),
+    dcc.Link('View Price Change Forecast', href='/price-change-forecast'),
     html.Br(),
-    dcc.Link('Go to Page 2', href='/page-2'),
+    # dcc.Link('Go to Page 2', href='/page-2'),
 ])
-
-# page_1_layout = html.Div([
-#             html.H1('Page 1'),
-#             html.Div(id='page-1-content'),
-#             html.Br(),
-#             dcc.Link('Go to Page 2', href='/page-2'),
-#             html.Br(),
-#             dcc.Link('Go back to home', href='/'),
-#         ])
-
-# @app.callback(dash.dependencies.Output('page-1-content', 'children'),
-#             [dash.dependencies.Input('page-1-dropdown', 'value')])
-# def page_1_dropdown(value):
-#     active_model = ...
-#     return 'You have selected "{}"'.format(value)
-
-page_2_layout = html.Div([
-    html.H1('Page 2'),
-    dcc.RadioItems(
-        id='page-2-radios',
-        options=[{'label': i, 'value': i} for i in ['Orange', 'Blue', 'Red']],
-        value='Orange'
-    ),
-    html.Div(id='page-2-content'),
-    html.Br(),
-    dcc.Link('Go to Page 1', href='/page-1'),
-    html.Br(),
-    dcc.Link('Go back to home', href='/')
-])
-
-@app.callback(dash.dependencies.Output('page-2-content', 'children'),
-              [dash.dependencies.Input('page-2-radios', 'value')])
-def page_2_radios(value):
-    return 'You have selected "{}"'.format(value)
-
 
 # Update the index
 @app.callback(dash.dependencies.Output('page-content', 'children'),
               [dash.dependencies.Input('url', 'pathname')])
 def display_page(pathname):
-    if pathname == '/page-1':
-        return page1.page_1_layout
-    elif pathname == '/page-2':
-        return page_2_layout
+    if pathname == '/price-change-forecast':
+        return price_change_page.layout
+    # elif pathname == '/page-2':
+    #     return page_2_layout
     else:
         return index_page
     # You could also return a 404 "URL not found" page here
@@ -79,3 +47,24 @@ def display_page(pathname):
 
 if __name__ == '__main__':
     app.run_server(debug=True)
+
+
+
+# page_2_layout = html.Div([
+#     html.H1('Page 2'),
+#     dcc.RadioItems(
+#         id='page-2-radios',
+#         options=[{'label': i, 'value': i} for i in ['Orange', 'Blue', 'Red']],
+#         value='Orange'
+#     ),
+#     html.Div(id='page-2-content'),
+#     html.Br(),
+#     dcc.Link('Go to Page 1', href='/page-1'),
+#     html.Br(),
+#     dcc.Link('Go back to home', href='/')
+# ])
+
+# @app.callback(dash.dependencies.Output('page-2-content', 'children'),
+#               [dash.dependencies.Input('page-2-radios', 'value')])
+# def page_2_radios(value):
+#     return 'You have selected "{}"'.format(value)
