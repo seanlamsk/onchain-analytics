@@ -37,15 +37,16 @@ class PriceChangeForecast:
             model.load_model(f'models/saved_models/{coin}/lstm_price_change_{coin}.hp5')
             
             # store prediction from test set in memory
-            self.predictions[k] = model.predict(model.X_test,return_label=True)
+            self.predictions[k] = model.predict(model.X_test,return_label=False)
 
         # map date to index of test partition
         # test partition start from latest BTC halving: 2020-05-11 to 2020-09-10
-        start = date(2020, 9, 1)
+        start = date(2020, 8, 1)
         end = date(2020, 9, 11)
+        delta = end - start
         dates_range = pd.date_range(start,end-timedelta(days=1),freq='d').astype(str).to_list()
 
-        date2id = dict(zip(dates_range,range(len(model.X_test)-10,len(model.X_test),1)))
+        date2id = dict(zip(dates_range,range(len(model.X_test)-delta.days,len(model.X_test),1)))
         
         #################################
         # HTML ELEMENTS
@@ -76,11 +77,11 @@ class PriceChangeForecast:
                 [
                     html.H4("Forecast", id="date_picker_h"),
                     dcc.DatePickerSingle(
-                        id='forecast-date',
-                        min_date_allowed=date(2020, 9, 17),
-                        max_date_allowed=date(2020, 9, 20),
-                        initial_visible_month=date(2020, 9, 17),
-                        date=date(2020, 9, 17)
+                        id='selected-date',
+                        min_date_allowed=start,
+                        max_date_allowed=end,
+                        initial_visible_month=start,
+                        date=start
                     ),
                 ]
             )
@@ -132,10 +133,18 @@ class PriceChangeForecast:
         def coin_dropdown(value):
             return 'Forecast for {}'.format(value.upper())
 
+        @self.app.callback(
+                    Output('lstm-value', 'children'),
+                    [Input('pricechange-coin-dropdown', 'value'),Input('selected-date', 'date')])
+        def select_date(coin,selected_date):
+            ind = date2id[selected_date]
+            prediction = self.predictions[f"LSTM-{coin}"][ind]
+            return prediction.upper()
+
     def select_model(self,dropdown_option):
         if dropdown_option == 'btc':
-            self.active_model = self.models['LSTM-btc']
+            self.active_lstm_model = self.models['LSTM-btc']
         elif dropdown_option == 'eth':
-            self.active_model = self.models['LSTM-eth']
+            self.active_lstm_model = self.models['LSTM-eth']
         elif dropdown_option == 'ltc':
-            self.active_model = self.models['LSTM-ltc']
+            self.active_lstm_model = self.models['LSTM-ltc']
