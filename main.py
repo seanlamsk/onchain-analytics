@@ -7,6 +7,7 @@ import pandas as pd
 
 from PriceChangeForecast import PriceChangeForecast
 from Portfolios import Portfolios_Analysis
+from PricePrediction import PricePrediction
 
 
 
@@ -21,6 +22,7 @@ external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 price_change_page = PriceChangeForecast(app)
 portfolio_analysis = Portfolios_Analysis(app)
+price_pred_page = PricePrediction(app)
 
 app.layout = html.Div([
     html.H1('On Chain Analytics Dashboard'),
@@ -31,9 +33,13 @@ app.layout = html.Div([
 index_page = html.Div([
     dcc.Link('View Price Change Forecast', href='/price-change-forecast'),
     html.Br(),
+
+    dcc.Link('View Price Forecast', href='/price-forecast'),
+    html.Br(),
     
     dcc.Link('View Portfolio Analysis', href='/portfolio-analysis'),
     html.Br(),
+    
 ])
 
 # Update the index
@@ -42,6 +48,8 @@ index_page = html.Div([
 def display_page(pathname):
     if pathname == '/price-change-forecast':
         return price_change_page.layout
+    elif pathname == '/price-forecast':
+        return price_pred_page.layout
     elif pathname == '/portfolio-analysis':
         return portfolio_analysis.layout
     else:

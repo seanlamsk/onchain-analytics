@@ -2,3 +2,4 @@ dash
 numpy
 sklearn
 dash_bootstrap_components
+pmdarima
