@@ -7,7 +7,6 @@ from datetime import date
 from datetime import date, timedelta
 import pandas as pd
 
-from models.LSTM_price_change import LSTMPriceChangeModel
 
 class PriceChangeForecast:
 
@@ -20,33 +19,24 @@ class PriceChangeForecast:
 
         self.app = app
 
-        self.models = {
-            "LSTM-btc": LSTMPriceChangeModel("btc_metrics_raw.csv"),
-            "LSTM-eth": LSTMPriceChangeModel("eth_metrics_raw.csv"),
-            "LSTM-ltc": LSTMPriceChangeModel("ltc_metrics_raw.csv"),
-        }
-
-        self.select_model(DEFAULT_COIN)
-
         self.predictions = {}
         
         # Loading trained models
-        for k,model in self.models.items():
-            coin = k.split('-')[1]
-            model.init()
-            model.load_model(f'models/saved_models/{coin}/lstm_price_change_{coin}.hp5')
-            
+        for coin in ['btc','eth','ltc']:
+            k = f'LSTM-{coin}'
             # store prediction from test set in memory
-            self.predictions[k] = model.predict(model.X_test,return_label=False)
+            prediction = pd.read_csv(f"models/predictions/lstm_price_change_pred_{coin}.csv").to_numpy()
 
-        # map date to index of test partition
-        # test partition start from latest BTC halving: 2020-05-11 to 2020-09-10
-        start = date(2020, 8, 1)
-        end = date(2020, 9, 11)
-        delta = end - start
-        dates_range = pd.date_range(start,end-timedelta(days=1),freq='d').astype(str).to_list()
+            # map date to index of test partition
+            # test partition start from latest BTC halving: 2020-05-11 to 2020-09-10
+            start = date(2020, 8, 1)
+            end = date(2020, 9, 11)
+            delta = end - start
+            dates_range = pd.date_range(start,end-timedelta(days=1),freq='d').astype(str).to_list()
 
-        date2id = dict(zip(dates_range,range(len(model.X_test)-delta.days,len(model.X_test),1)))
+            date2id = dict(zip(dates_range,range(len(prediction)-delta.days,len(prediction),1)))
+            # print(len(prediction),len(dates_range),date2id)
+            self.predictions[k] = (pd.read_csv(f"models/predictions/lstm_price_change_pred_{coin}.csv").to_numpy(), date2id)
         
         #################################
         # HTML ELEMENTS
@@ -79,7 +69,7 @@ class PriceChangeForecast:
                     dcc.DatePickerSingle(
                         id='selected-date',
                         min_date_allowed=start,
-                        max_date_allowed=end,
+                        max_date_allowed=end-timedelta(days=1),
                         initial_visible_month=start,
                         date=start
                     ),
@@ -137,14 +127,8 @@ class PriceChangeForecast:
                     Output('lstm-value', 'children'),
                     [Input('pricechange-coin-dropdown', 'value'),Input('selected-date', 'date')])
         def select_date(coin,selected_date):
-            ind = date2id[selected_date]
-            prediction = self.predictions[f"LSTM-{coin}"][ind]
-            return prediction.upper()
+            prediction = self.predictions[f"LSTM-{coin}"][0]
+            id_mapping = self.predictions[f"LSTM-{coin}"][1]
+            ind = id_mapping[selected_date]
+            return prediction[ind][1].upper()
 
-    def select_model(self,dropdown_option):
-        if dropdown_option == 'btc':
-            self.active_lstm_model = self.models['LSTM-btc']
-        elif dropdown_option == 'eth':
-            self.active_lstm_model = self.models['LSTM-eth']
-        elif dropdown_option == 'ltc':
-            self.active_lstm_model = self.models['LSTM-ltc']
