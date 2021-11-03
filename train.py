@@ -1,14 +1,14 @@
 from models.LSTM_price_change import LSTMPriceChangeModel
+import pandas as pd
+
+coins = ['btc','eth','ltc']
 
 # LSTM change prediction
-model = LSTMPriceChangeModel("btc_metrics_raw.csv")
-model.init()
-model.fit("models/saved_models/btc/lstm_price_change_btc.hp5")
+for coin in coins:
+    model = LSTMPriceChangeModel(f"{coin}_metrics_raw.csv",N_PERIOD=10)
+    model.init()
+    model.fit(f"models/saved_models/{coin}/lstm_price_change_{coin}.hp5")
+    predictions = model.predict(model.X_test,return_label=False)
+    pd.DataFrame(predictions).to_csv(f"models/predictions/lstm_price_change_pred_{coin}.csv", header=None)
 
-model2 = LSTMPriceChangeModel("ltc_metrics_raw.csv")
-model2.init()
-model2.fit("models/saved_models/ltc/lstm_price_change_ltc.hp5")
-
-model3 = LSTMPriceChangeModel("eth_metrics_raw.csv")
-model3.init()
-model3.fit("models/saved_models/eth/lstm_price_change_eth.hp5")
+    del model
