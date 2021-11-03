@@ -6,6 +6,7 @@ import plotly.express as px
 import pandas as pd
 
 from PriceChangeForecast import PriceChangeForecast
+from Portfolios import Portfolios_Analysis
 
 
 
@@ -19,6 +20,7 @@ suppress_callback_exceptions=True,
 external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 price_change_page = PriceChangeForecast(app)
+portfolio_analysis = Portfolios_Analysis(app)
 
 app.layout = html.Div([
     html.H1('On Chain Analytics Dashboard'),
@@ -29,7 +31,9 @@ app.layout = html.Div([
 index_page = html.Div([
     dcc.Link('View Price Change Forecast', href='/price-change-forecast'),
     html.Br(),
-    # dcc.Link('Go to Page 2', href='/page-2'),
+    
+    dcc.Link('View Portfolio Analysis', href='/portfolio-analysis'),
+    html.Br(),
 ])
 
 # Update the index
@@ -38,8 +42,8 @@ index_page = html.Div([
 def display_page(pathname):
     if pathname == '/price-change-forecast':
         return price_change_page.layout
-    # elif pathname == '/page-2':
-    #     return page_2_layout
+    elif pathname == '/portfolio-analysis':
+        return portfolio_analysis.layout
     else:
         return index_page
     # You could also return a 404 "URL not found" page here
