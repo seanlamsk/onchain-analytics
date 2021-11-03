@@ -124,15 +124,19 @@ def plotEfficientFrontier(df, cov_matrix):
         p_vol.append(ann_sd.round(5))
 
     data = {'Returns':p_ret, 'Volatility':p_vol}
-
+    
     for counter, symbol in enumerate(df.columns.tolist()):
         # print(counter, symbol)
         data[symbol+' weight'] = [w[counter] for w in p_weights]
 
     portfolios  = pd.DataFrame(data)
+    rf = 0.01
+    sharpe = ((portfolios['Returns']-rf)/portfolios['Volatility'])
+    portfolios['Sharpe Ratio'] = sharpe
+    portfolios['Returns'] = portfolios['Returns']*100
     # portfolios.plot.scatter(x='Volatility', y='Returns', marker='o', s=10, alpha=0.3, grid=True, figsize=[10,10])
     
-    fig = px.scatter(portfolios, x= 'Volatility', y = 'Returns', title = 'Portfolios', hover_data = {'btc weight':':.2f', 'eth weight':':.2f', 'ltc weight':':.2f'})
+    fig = px.scatter(portfolios, x= 'Volatility', y = 'Returns', labels = dict(Returns = 'Returns(%)') , color='Sharpe Ratio', title = 'Portfolios', hover_data = {'btc weight':':.2f', 'eth weight':':.2f', 'ltc weight':':.2f'})
     min_vol_port = portfolios.iloc[portfolios['Volatility'].idxmin()]
     rf = 0.01 # risk factor
     optimal_risky_port = portfolios.iloc[((portfolios['Returns']-rf)/portfolios['Volatility']).idxmax()]
@@ -185,6 +189,14 @@ def plotEfficientFrontier(df, cov_matrix):
             showlegend=True
         )
     )
+    # fig.update_layout(coloraxis_colorbar=dict(yanchor="top", y=0, x=1,
+    #                                       ticks="outside"))
+    fig.update_layout(legend=dict(
+    yanchor="top",
+    y=0.99,
+    xanchor="left",
+    x=0.01
+    ))
     
     return  fig, min_vol_port, optimal_risky_port
     # return 
