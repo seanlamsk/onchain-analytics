@@ -52,7 +52,7 @@ class PricePrediction:
             html.Br(),
             # dcc.Link('Go to Page 2', href='/page-2'),
             html.Br(),
-            # dcc.Link('Go back to home', href='/'),
+            dcc.Link('Go back to home', href='/'),
         ])
 
         @self.app.callback(dash.dependencies.Output('comparison-graph', 'figure'),
