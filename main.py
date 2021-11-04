@@ -31,15 +31,14 @@ app.layout = html.Div([
 ])
 
 index_page = html.Div([
+    dcc.Link('View Price Forecast', href='/price-forecast'),
+    html.Br(),
+
     dcc.Link('View Price Change Forecast', href='/price-change-forecast'),
     html.Br(),
 
-    dcc.Link('View Price Forecast', href='/price-forecast'),
-    html.Br(),
-    
     dcc.Link('View Portfolio Analysis', href='/portfolio-analysis'),
     html.Br(),
-    
 ])
 
 # Update the index

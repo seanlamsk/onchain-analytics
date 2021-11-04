@@ -124,25 +124,41 @@ def plotEfficientFrontier(df, cov_matrix):
         p_vol.append(ann_sd.round(5))
 
     data = {'Returns':p_ret, 'Volatility':p_vol}
-
+    
     for counter, symbol in enumerate(df.columns.tolist()):
         # print(counter, symbol)
         data[symbol+' weight'] = [w[counter] for w in p_weights]
 
     portfolios  = pd.DataFrame(data)
+    rf = 0.01
+    sharpe = ((portfolios['Returns']-rf)/portfolios['Volatility'])
+    portfolios['Sharpe Ratio'] = sharpe
+    portfolios['Returns'] = portfolios['Returns']*100
     # portfolios.plot.scatter(x='Volatility', y='Returns', marker='o', s=10, alpha=0.3, grid=True, figsize=[10,10])
     
-    fig = px.scatter(portfolios, x= 'Volatility', y = 'Returns', title = 'Portfolios', hover_data = {'btc weight':':.2f', 'eth weight':':.2f', 'ltc weight':':.2f'})
+    fig = px.scatter(portfolios, x= 'Volatility', y = 'Returns', labels = dict(Returns = 'Returns(%)') , color='Sharpe Ratio', title = 'Portfolios', hover_data = {'btc weight':':.2f', 'eth weight':':.2f', 'ltc weight':':.2f'})
     min_vol_port = portfolios.iloc[portfolios['Volatility'].idxmin()]
     rf = 0.01 # risk factor
     optimal_risky_port = portfolios.iloc[((portfolios['Returns']-rf)/portfolios['Volatility']).idxmax()]
+    btcmvp = min_vol_port['btc weight'] * 100
+    ethmvp = min_vol_port['eth weight'] * 100
+    ltcmvp = min_vol_port['ltc weight'] * 100
+    btcorp = optimal_risky_port['btc weight'] * 100
+    ethorp = optimal_risky_port['eth weight'] * 100
+    ltcorp = optimal_risky_port['ltc weight'] * 100
+    btcmvp = btcmvp.round(5)
+    ethmvp = ethmvp.round(5)
+    ltcmvp = ltcmvp.round(5)
+    btcorp = btcorp.round(5)
+    ethorp = ethorp.round(5)
+    ltcorp = ltcorp.round(5)
     fig.add_trace(
     go.Scatter(
         mode='markers',
         x=[optimal_risky_port['Volatility']],
         y=[optimal_risky_port['Returns']],
         name = "Optimal Risky Portfolio",
-        hovertemplate = "Volatility: %{x} <br> Returns: %{y} <br> BTC: %{optimal_risky_port[`btc`]}% <br> ETH: %{optimal_risky_port[`eth`]}% <br> %{optimal_risky_port[`ltc`]}%" ,
+        hovertemplate = "Volatility: %{x} <br> Returns: %{y} <br>" + "BTC: {}% <br> ETH: {}% <br> LTC: {}%".format(btcorp,ethorp,ltcorp) ,
         marker=dict(
             color='Red',
             size=30,
@@ -161,7 +177,7 @@ def plotEfficientFrontier(df, cov_matrix):
             x=[min_vol_port['Volatility']],
             y=[min_vol_port['Returns']],
             name = "Minimal Volatility Portfolio",
-            hovertemplate = "Volatility: %{x} <br> Returns: %{y} <br> BTC: %{min_vol_port[`btc`]}% <br> ETH: %{min_vol_port[`eth`]}% <br> %{min_vol_port[`ltc`]}%" ,
+            hovertemplate = "Volatility: %{x} <br> Returns: %{y} <br>"  + "BTC: {}% <br> ETH: {}% <br> LTC: {}%".format(btcmvp,ethmvp,ltcmvp) ,
             marker=dict(
                 color='Green',
                 size=30,
@@ -173,6 +189,14 @@ def plotEfficientFrontier(df, cov_matrix):
             showlegend=True
         )
     )
+    # fig.update_layout(coloraxis_colorbar=dict(yanchor="top", y=0, x=1,
+    #                                       ticks="outside"))
+    fig.update_layout(legend=dict(
+    yanchor="top",
+    y=0.99,
+    xanchor="left",
+    x=0.01
+    ))
     
     return  fig, min_vol_port, optimal_risky_port
     # return 

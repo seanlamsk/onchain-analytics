@@ -12,15 +12,20 @@ class Portfolios_Analysis:
     def __init__(self,app):
         self.app = app
         fig, minvolport, optriskport = efficientfrontier.plotEfficientFrontierfromRawCSV()
-
+        btcmvp = minvolport['btc weight'] * 100
+        ethmvp = minvolport['eth weight'] * 100
+        ltcmvp = minvolport['ltc weight'] * 100
+        btcorp = optriskport['btc weight'] * 100
+        ethorp = optriskport['eth weight'] * 100
+        ltcorp = optriskport['ltc weight'] * 100
         self.cardMVP = dbc.Card(
             dbc.CardBody(
                 [
                     html.H4("Minimum Volatility Portfolio", id="card-title"),
                     html.Ul(id = "holdingsMVP"),
-                    html.Li("BTC: %{minvolport['btc']}", id = "MVPBTC"),
-                    html.Li("ETH: %{minvolport['eth']}", id ="MVPETH" ),
-                    html.Li("LTC %{minvolport['ltc']}", id = "MVPLTC")
+                    html.Li("BTC: {}%".format(btcmvp.round(5)), id = "MVPBTC"),
+                    html.Li("ETH: {}%".format(ethmvp.round(5)), id ="MVPETH" ),
+                    html.Li("LTC {}%".format(ltcmvp.round(5)), id = "MVPLTC")
                 ]
             )
         )
@@ -30,9 +35,9 @@ class Portfolios_Analysis:
                 [
                     html.H4("Optimal Returns Portfolio", id="card-title2"),
                     html.Ul(id = "holdingsORP"),
-                    html.Li("BTC: %{optriskport[`btc`]}", id = "ORPBTC"),
-                    html.Li("ETH: %{optriskport[`eth`]}", id = "ORPETH"),
-                    html.Li("LTC %{optriskport[`ltc`]}", id = "ORPLTC")
+                    html.Li("BTC: {}%".format(btcorp.round(5)), id = "ORPBTC"),
+                    html.Li("ETH: {}%".format(ethorp.round(5)), id = "ORPETH"),
+                    html.Li("LTC {}%".format(ltcorp.round(5)), id = "ORPLTC")
                 ]
             )
         )

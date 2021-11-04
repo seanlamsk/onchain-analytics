@@ -87,7 +87,7 @@ class LSTMPriceChangeModel:
                 threshold_shift = threshold_shift
                 threshold_corr = threshold_corr
                 
-                eligible = reduce(lambda prev,shift: bool( shift+self.N_PERIOD <= threshold_shift and abs(sorted_corr_shift[shift+self.N_PERIOD]) >= threshold_corr) , sorted_corr_shift[:top_n])
+                eligible = reduce(lambda prev,shift: bool( shift+self.N_PERIOD <= threshold_shift and abs(corrs[shift+self.N_PERIOD]) >= threshold_corr) , sorted_corr_shift[:top_n])
 
                 # print(f"{variable} eligible? {eligible} , ","Best cross corr shifts: ",sorted_corr_shift[:top_n])
                 if eligible:
