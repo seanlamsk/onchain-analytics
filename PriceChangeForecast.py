@@ -93,6 +93,7 @@ class PriceChangeForecast:
 
             ]),
             html.Br(),
+            dcc.Link('Compare coins', href='/price-change-forecast-compare'),
             html.H3(id='selected-coin'),
             html.Br(),
             # Grid layout

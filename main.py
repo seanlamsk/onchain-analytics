@@ -6,6 +6,7 @@ import plotly.express as px
 import pandas as pd
 
 from PriceChangeForecast import PriceChangeForecast
+from PriceChangeForecastComparison import PriceChangeForecastComparison
 from Portfolios import Portfolios_Analysis
 from PricePrediction import PricePrediction
 
@@ -21,6 +22,7 @@ suppress_callback_exceptions=True,
 external_stylesheets=[dbc.themes.BOOTSTRAP])
 
 price_change_page = PriceChangeForecast(app)
+price_change_comparison_page = PriceChangeForecastComparison(app)
 portfolio_analysis = Portfolios_Analysis(app)
 price_pred_page = PricePrediction(app)
 
@@ -47,6 +49,8 @@ index_page = html.Div([
 def display_page(pathname):
     if pathname == '/price-change-forecast':
         return price_change_page.layout
+    elif pathname == '/price-change-forecast-compare':
+        return price_change_comparison_page.layout
     elif pathname == '/price-forecast':
         return price_pred_page.layout
     elif pathname == '/portfolio-analysis':
