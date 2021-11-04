@@ -6,26 +6,26 @@ from models.LSTM_price_change import LSTMPriceChangeModel
 from models.arima_model import ArimaModel
 from models.LSTM_PricePrediction import LSTMModel
 
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
+coins = ['btc','eth','ltc']
+
+# LSTM change prediction
+# for coin in coins:
+#     model = LSTMPriceChangeModel(f"{coin}_metrics_raw.csv",N_PERIOD=10)
+#     model.init()
+#     model.fit(f"models/saved_models/{coin}/lstm_price_change_{coin}.hp5")
+#     predictions = model.predict(model.X_test,return_label=False)
+#     pd.DataFrame(predictions).to_csv(f"models/predictions/lstm_price_change_pred_{coin}.csv", header=None)
+
+#     del model
+
+
+#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 dateparse = lambda dates: pd.datetime.strptime(dates[:dates.find('+')], '%Y-%m-%d %H:%M:%S')
 df_btc = pd.read_csv('btc_metrics_raw.csv', index_col='Date', parse_dates=True, date_parser=dateparse)
 df_eth = pd.read_csv('eth_metrics_raw.csv', index_col='Date', parse_dates=True, date_parser=dateparse)
 df_ltc = pd.read_csv('ltc_metrics_raw.csv', index_col='Date', parse_dates=True, date_parser=dateparse)
 
-#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
-coins = ['btc','eth','ltc']
-
-# LSTM change prediction
-for coin in coins:
-    model = LSTMPriceChangeModel(f"{coin}_metrics_raw.csv",N_PERIOD=10)
-    model.init()
-    model.fit(f"models/saved_models/{coin}/lstm_price_change_{coin}.hp5")
-    predictions = model.predict(model.X_test,return_label=False)
-    pd.DataFrame(predictions).to_csv(f"models/predictions/lstm_price_change_pred_{coin}.csv", header=None)
-
-    del model
-
-
-#------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 # LSTM Price Change
 def add_into_df (df, input):
     df.loc[-1] = input  # adding a row
@@ -39,39 +39,6 @@ def annualised_return (df):
     n = relativedelta(df.index[-1], df.index[0]).years
     return ((1 + df['close'][-1])**(1/n) - 1) * 100
 
-
-Lstm_obj1 = LSTMModel('btc_metrics_raw.csv', 'models/saved_models/btc/lstm_price_predictor.hp5')
-Lstm_obj2 = LSTMModel('eth_metrics_raw.csv', 'models/saved_models/eth/lstm_price_predictor.hp5')
-Lstm_obj3 = LSTMModel('ltc_metrics_raw.csv', 'models/saved_models/ltc/lstm_price_predictor.hp5')
-
-# ARIMA
-Arima_Obj1 = ArimaModel('btc_metrics_raw.csv', 10, 'models/saved_models/btc/arimamodel.pkl')
-Arima_Obj2 = ArimaModel('eth_metrics_raw.csv', 10, 'models/saved_models/eth/arimamodel.pkl')
-Arima_Obj3 = ArimaModel('ltc_metrics_raw.csv', 10, 'models/saved_models/ltc/arimamodel.pkl')
-
-#Create CSV for LSTM and ARIMA
-#Pred next 10days
-df_btc_close_last_30 = df_btc['close'][-30:].reset_index()
-df_eth_close_last_30 = df_eth['close'][-30:].reset_index()
-df_ltc_close_last_30 = df_ltc['close'][-30:].reset_index()
-
-Lstm_pred_btc = Lstm_obj1.forecast().reset_index().rename(columns={0: 'LSTM_btc', 'index': 'Date'})
-Lstm_pred_eth = Lstm_obj2.forecast().reset_index().rename(columns={0: 'LSTM_eth', 'index': 'Date'})
-Lstm_pred_ltc = Lstm_obj3.forecast().reset_index().rename(columns={0: 'LSTM_ltc', 'index': 'Date'})
-
-Arima_pred_btc = Arima_Obj1.arima_pred_future().reset_index().rename(columns={'index': 'Date', 'ARIMA': 'ARIMA_btc'})
-Arima_pred_eth = Arima_Obj2.arima_pred_future().reset_index().rename(columns={'index': 'Date', 'ARIMA': 'ARIMA_eth'})
-Arima_pred_ltc = Arima_Obj3.arima_pred_future().reset_index().rename(columns={'index': 'Date', 'ARIMA': 'ARIMA_ltc'})
-
-#Add last data to df
-add_into_df(Lstm_pred_btc, df_btc_close_last_30.iloc[-1, :].to_list())
-add_into_df(Lstm_pred_eth, df_eth_close_last_30.iloc[-1, :].to_list())
-add_into_df(Lstm_pred_ltc, df_ltc_close_last_30.iloc[-1, :].to_list())
-
-add_into_df(Arima_pred_btc, df_btc_close_last_30.iloc[-1, :].to_list())
-add_into_df(Arima_pred_eth, df_eth_close_last_30.iloc[-1, :].to_list())
-add_into_df(Arima_pred_ltc, df_ltc_close_last_30.iloc[-1, :].to_list())
-
 #Annualised volatility for whole period
 btc_HV = annualised_HV(df_btc)
 eth_HV = annualised_HV(df_eth)
@@ -81,17 +48,35 @@ btc_returns = annualised_return(df_btc)
 eth_returns = annualised_return(df_eth)
 ltc_returns = annualised_return(df_ltc)
 
-pred_df = Lstm_pred_btc.merge(Lstm_pred_eth, on='Date').merge(Lstm_pred_ltc, on='Date').merge(Arima_pred_btc, on='Date').merge(Arima_pred_eth, on='Date').merge(Arima_pred_ltc, on='Date').round(2)
-
-actual_df = df_btc_close_last_30.merge(df_eth_close_last_30, on='Date').merge(df_ltc_close_last_30, on='Date').rename(columns={'close_x': 'close_btc', 'close_y': 'close_eth', 'close': 'close_ltc'}).round(2)
-
-data = {'Volatilty': [btc_HV, eth_HV, ltc_HV], "Annualised Returns": [btc_returns, eth_returns, ltc_returns]}
+data = {'Volatility': [btc_HV, eth_HV, ltc_HV], "Annualised Returns": [btc_returns, eth_returns, ltc_returns]}
 stats_df = pd.DataFrame(data).round(2)
 stats_df.index = ['btc', 'eth', 'ltc']
 
+for coin in coins:
+    Lstm_obj = LSTMModel(f'{coin}_metrics_raw.csv', f'models/saved_models/{coin}/lstm_price_predictor.hp5')#, 'load')
+    Arima_Obj = ArimaModel(f'{coin}_metrics_raw.csv', 10, f'models/saved_models/{coin}/arimamodel.pkl')#, 'load')
+
+    dateparse = lambda dates: pd.datetime.strptime(dates[:dates.find('+')], '%Y-%m-%d %H:%M:%S')
+    df = pd.read_csv(f'{coin}_metrics_raw.csv', index_col='Date', parse_dates=True, date_parser=dateparse)
+
+    df_close_last_30 = df['close'][-30:].reset_index()
+
+    Lstm_pred = Lstm_obj.forecast().reset_index().rename(columns={0: 'LSTM', 'index': 'Date'})
+
+    Arima_pred = Arima_Obj.arima_pred_future().reset_index().rename(columns={'index': 'Date'})
+
+    add_into_df(Lstm_pred, df_close_last_30.iloc[-1, :].to_list())
+
+    add_into_df(Arima_pred, df_close_last_30.iloc[-1, :].to_list())
+
+    pred_df=Arima_pred.merge(Lstm_pred, on='Date').round(2)
+    pred_df.to_csv(f'models/predictions/{coin}_price_pred_prediction.csv')
+
+    actual_df = df_close_last_30.round(2)
+    actual_df.to_csv(f'models/predictions/{coin}_price_pred_actual.csv')
+    
 #Write CSV
-pred_df.to_csv('models/predictions/price_pred_prediction.csv')
-actual_df.to_csv('models/predictions/price_pred_actual.csv')
+
 stats_df.to_csv('models/predictions/price_pred_stats.csv')
 
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------

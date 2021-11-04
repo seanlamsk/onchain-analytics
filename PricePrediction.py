@@ -3,6 +3,7 @@ sys.path.insert(0,'..')
 import dash
 import dash_html_components as html
 import dash_core_components as dcc
+import dash_bootstrap_components as dbc
 from dash_core_components import Dropdown, Graph, Slider
 import plotly.express as px
 import plotly.graph_objs as go
@@ -17,33 +18,97 @@ class PricePrediction:
 
     def __init__(self,app):
         self.app = app
-        self.ARIMA_pred = ArimaModel('btc_metrics_raw.csv', 10, './models/saved_models/btc/arimamodel.pkl', 'load').arima_pred_future()
-        self.LSTM_pred = LSTMModel('btc_metrics_raw.csv', './models/saved_models/btc/lstm_price_predictor.hp5', 'load').forecast()
+        self.coin = 'btc'
+        self.value = 1
+        self.prediction = pd.read_csv(f'models/predictions/{self.coin}_price_pred_prediction.csv')
+        self.actual = pd.read_csv(f'models/predictions/{self.coin}_price_pred_actual.csv')
+        self.stats = pd.read_csv('models/predictions/price_pred_stats.csv', index_col=0)
+
+        def create_card(html_elements):
+            return dbc.Card(
+                dbc.CardBody(
+                    html_elements
+                )
+            )      
+
+        arima_pred_card =  create_card(
+            [
+                html.H4('ARIMA Price Prediction'),
+                html.Div(id='Arima_pred'),
+            ]
+        )
+
+        lstm_pred_card =  create_card(
+            [
+                html.H4('LSTM Price Prediction'),
+                html.Div(id='Lstm_pred'),
+            ]
+        )
+
+        returns_card =  create_card(
+            [
+                html.H4('Annualised returns'),
+                html.Div(id='returns'),
+            ]
+        )
+
+        volatility_card =  create_card(
+            [
+                html.H4('Annualised volatility'),
+                html.Div(id='volatility'),
+            ]
+        )
+
+        slider_card =  create_card(
+            [
+                Slider(id='date-selector',
+                    min=0, 
+                    max=9,
+                    marks = {i-1: '{}'.format(self.prediction['Date'][i]) for i in range(1, len(self.prediction['Date']))},
+                    value = 0,
+                    ),
+            ]
+        )
+
+        dropdown_card =  create_card(
+            [
+                Dropdown(
+                    id = 'crypto-select',
+                    options = [
+                        {'label': 'Bitcoin', 'value': 'Bitcoin'},
+                        {'label': 'Ethereum', 'value': 'Ethereum'},
+                        {'label': 'Litecoin', 'value': 'Litecoin'}
+                    ],
+                    value = 'selected_coin',
+                    searchable=False,
+                    clearable=False,
+                    placeholder="Bitcoin",
+                    # style = dict(
+                    #             width='90%',
+                    #             display='inline-block',
+                    #             verticalAlign="middle"
+                    #         )
+            ),
+            
+            ]
+        )
 
         self.layout = html.Div([
             html.H1('Price Prediction Models'),
-            Dropdown(
-                id = 'crypto-select',
-                options = [
-                    {'label': 'Bitcoin', 'value': 'btc_metrics_raw.csv'},
-                    {'label': 'Ethereum', 'value': 'eth_metrics_raw.csv'},
-                    {'label': 'Litecoin', 'value': 'ltc_metrics_raw.csv'}
-                ],
-                value = 'modelname',
-                searchable=False,
-                clearable=False,
-                placeholder="Bitcoin"
-            ),
-            Slider(id='date-selector',
-                min=0, 
-                max=6,
-                marks = {i: '{}'.format(self.ARIMA_pred.index[i]) for i in range(len(self.ARIMA_pred.index))},
-                value = 0,
-                ),
-            html.H4('ARIMA Price Prediction'),
-            html.Div(id='Arima_pred'),
-            html.H4('LSTM Price Prediction'),
-            html.Div(id='Lstm_pred'),
+            html.Br(),
+            html.Div([
+                dbc.Row([
+                    dbc.Col([dropdown_card])
+                ]), 
+                dbc.Row([
+                    dbc.Col([slider_card])
+                ]),
+                dbc.Row([
+                    dbc.Col([arima_pred_card]), dbc.Col([lstm_pred_card])
+                ]),
+                dbc.Row([
+                    dbc.Col([returns_card]), dbc.Col([volatility_card])
+                ]),]),
             html.H4('Price Prediction Graph'),
             Graph(
                 id = 'comparison-graph'
@@ -58,51 +123,57 @@ class PricePrediction:
         @self.app.callback(dash.dependencies.Output('comparison-graph', 'figure'),
                     [dash.dependencies.Input('crypto-select', 'value')])
         def update_graph(value):
-            name_coin = 'Bitcoin'
-            arima_model_name = './models/saved_models/btc/arimamodel.pkl'
-            lstm_model_name = './models/saved_models/btc/lstm_price_predictor.hp5'
-            if value == "modelname":
-                value = "btc_metrics_raw.csv"
-            if value == 'eth_metrics_raw.csv':
-                arima_model_name = './models/saved_models/eth/arimamodel.pkl'
-                lstm_model_name = './models/saved_models/eth/lstm_price_predictor.hp5'
-                name_coin = 'Ethereum'
-            elif value == 'ltc_metrics_raw.csv':
-                arima_model_name = './models/saved_models/ltc/arimamodel.pkl'
-                lstm_model_name = './models/saved_models/ltc/lstm_price_predictor.hp5'
-                name_coin = 'Litecoin'
-            Arima_past_seven = ArimaModel(value, 10, arima_model_name, 'load').arima_pred_past_seven()
-            Arima_past_seven = Arima_past_seven.to_frame().reset_index()
-            LSTM_past_seven = LSTMModel(value, lstm_model_name, 'load').past_seven_days_forecast()
-            LSTM_past_seven = LSTM_past_seven.reset_index().rename(columns={0: 'LSTM'}) 
-            original_df = pd.read_csv(value)[-7:]
-            df = pd.merge(Arima_past_seven, LSTM_past_seven, on='Date')
-            traceArima = go.Scatter(x=df["Date"], y = df["ARIMA"], mode = 'lines', name = "ARIMA")
-            traceLstm = go.Scatter(x=df["Date"], y = df["LSTM"], mode = 'lines', name = "LSTM")
-            traceOG = go.Scatter(x=original_df["Date"], y = original_df["close"], mode = 'lines', name = "Actual Price")
-            df = [traceArima, traceLstm, traceOG]
-            layout = go.Layout(title = 'Comparison Between LSTM and ARIMA with ' + name_coin)
+            self.coin = 'btc'
+            if value == 'Ethereum':
+                self.coin = 'eth'
+            elif value == 'Litecoin':
+                self.coin = 'ltc'
+            self.prediction = pd.read_csv(f'models/predictions/{self.coin}_price_pred_prediction.csv')
+            self.actual = pd.read_csv(f'models/predictions/{self.coin}_price_pred_actual.csv')
+            traceArima = go.Scatter(x=self.prediction['Date'], y = self.prediction[f'ARIMA'], mode = 'lines', name = "ARIMA")
+            traceLstm = go.Scatter(x=self.prediction['Date'], y = self.prediction[f'LSTM'], mode = 'lines', name = "LSTM")
+            traceActual = go.Scatter(x=self.actual["Date"], y = self.actual[f'close'], mode = 'lines', name = "Actual Price")
+            df = [traceArima, traceLstm, traceActual]
+            layout = go.Layout(title = 'Price Prediction of LSTM and ARIMA with ' + value)
             figure = go.Figure(data=df, layout=layout)
             return figure
-        
-        @self.app.callback(dash.dependencies.Output('test', 'children'),
-            [dash.dependencies.Input('crypto-select', 'value')])
-        def update_pred_obj(value):
-            self.ARIMA_pred = ArimaModel('btc_metrics_raw.csv', 10, './models/saved_models/btc/arimamodel.pkl', 'load').arima_pred_future()
-            self.LSTM_pred = LSTMModel('btc_metrics_raw.csv', './models/saved_models/btc/lstm_price_predictor.hp5', 'load').forecast()
-            if value == 'eth_metrics_raw.csv':
-                self.ARIMA_pred = ArimaModel('eth_metrics_raw.csv', 10, './models/saved_models/eth/arimamodel.pkl', 'load').arima_pred_future()
-                self.LSTM_pred = LSTMModel('eth_metrics_raw.csv', './models/saved_models/eth/lstm_price_predictor.hp5', 'load').forecast()
-            elif value == 'ltc_metrics_raw.csv':
-                self.ARIMA_pred = ArimaModel('ltc_metrics_raw.csv', 10, './models/saved_models/ltc/arimamodel.pkl', 'load').arima_pred_future()
-                self.LSTM_pred = LSTMModel('ltc_metrics_raw.csv', './models/saved_models/ltc/lstm_price_predictor.hp5', 'load').forecast()
 
-        @self.app.callback(dash.dependencies.Output('Arima_pred', 'children'),
-                    [dash.dependencies.Input('date-selector', 'value')])
-        def update_pred_arima(value):
-            return self.ARIMA_pred[value]
+        @self.app.callback(dash.dependencies.Output('returns', 'children'),
+                    [dash.dependencies.Input('crypto-select', 'value')])
+        def update_returns(value):
+            coin = 'btc'
+            if value == 'Ethereum':
+                coin = 'eth'
+            elif value == 'Litecoin':
+                coin = 'ltc'
+            return self.stats.loc[coin, 'Annualised Returns']
+
+        @self.app.callback(dash.dependencies.Output('volatility', 'children'),
+                    [dash.dependencies.Input('crypto-select', 'value')])
+        def update_volatility(value):
+            coin = 'btc'
+            if value == 'Ethereum':
+                coin = 'eth'
+            elif value == 'Litecoin':
+                coin = 'ltc'
+            return self.stats.loc[coin, 'Volatility']
+        # @self.app.callback(dash.dependencies.Output('test', 'children'),
+        #             [dash.dependencies.Input('date-selector', 'value')])
+        # def up(value):
+        #     return value
+
+        @self.app.callback(dash.dependencies.Output('Arima_pred', 'children'), dash.dependencies.Output('date-selector', 'marks'),
+                    dash.dependencies.Input('date-selector', 'value'),
+                    dash.dependencies.Input('crypto-select', 'value')
+                    )
+        def update_pred_arima(value1, value2):
+            self.value = value1+1
+            return (self.prediction.iloc[self.value]['ARIMA'], {i-1: '{}'.format(self.prediction['Date'][i]) for i in range(1, len(self.prediction['Date']))})
             
         @self.app.callback(dash.dependencies.Output('Lstm_pred', 'children'),
-                    [dash.dependencies.Input('date-selector', 'value')])
-        def update_pred_lstm(value):
-            return self.LSTM_pred[0][value]
+                    dash.dependencies.Input('date-selector', 'value'),
+                    dash.dependencies.Input('crypto-select', 'value')
+                    )
+        def update_pred_lstm(value1, value2):
+            self.value = value1+1
+            return self.prediction.iloc[self.value]['LSTM']
