@@ -128,14 +128,13 @@ class PricePrediction:
                         )
                     ),
                     dbc.Col([
-                                html.H6('Price Threshold'),
-                                dbc.Input(
-                                    id='threshold', placeholder='Enter Threshold', type='text', debounce=True),
+                        html.H6('Price Threshold'),
+                        dbc.Input(
+                            id='threshold', placeholder='Enter Threshold', type='text', debounce=True),
                     ])
-                        ])
+                ])
             ]
-            )
-
+        )
 
         self.layout = html.Div([
             html.H3('Price Prediction Models'),
@@ -207,7 +206,7 @@ class PricePrediction:
             if ('50dMA' in value2):
                 df.append(tracema50)
             layout = go.Layout(
-                title='Price Prediction of LSTM and ARIMA with ' + name)
+                title=f'Price Graph of {name} (with Price Prediction)')
             figure = go.Figure(data=df, layout=layout)
             valid = True
             if self.previous_coin == name:
