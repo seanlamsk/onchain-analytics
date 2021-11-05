@@ -24,22 +24,79 @@ price_change_page = PriceChangeForecast(app)
 portfolio_analysis = Portfolios_Analysis(app)
 price_pred_page = PricePrediction(app)
 
+nav = dbc.Nav(
+    [
+        dbc.NavItem(dbc.NavLink('Home', href='/')),
+        dbc.NavItem(dbc.NavLink('Price Prediction Dashboard', href='/price-forecast')),
+        dbc.NavItem(dbc.NavLink('Price Change Dashboard', href='/price-change-forecast')),
+        dbc.NavItem(dbc.NavLink('Portfolio Dashboard', href='/portfolio-analysis')),
+    ],
+    justified=True,
+    pills=True,
+    style={
+        # 'background-color': '#2b367a'
+    },
+)
+
+navbar = dbc.Navbar(
+    dbc.Container(
+        [
+            html.A([
+                dbc.Row(
+                    [
+                        dbc.Col(html.Img(src="/assets/img/icon.png", height='50px')),
+                        dbc.Col(dbc.NavbarBrand("On Chain Analytics Dashboard", className='ms-2', style={'font-size': "40px"}), style={'verticalAlign':'left'}),
+                    ],
+                    align='center',
+                    className='g-0',
+                    style={'size':10}
+                ),
+                dbc.Row(
+                    dbc.Col(nav, style={})
+                    ,
+                    style={
+                        'size':10,
+                        'width': '90%'
+                    }
+                )
+                ],
+                style={"textDecoration": "none"},
+            )
+        ]
+    ),
+    color="#0e153d",
+    dark=True,
+)
+
+
 app.layout = html.Div([
-    html.H1('On Chain Analytics Dashboard'),
+    html.Div([
+        dbc.Row([
+            dbc.Col([navbar])
+        ]),
+        # dbc.Row([
+        #     nav
+        # ])
+    ],
+    ),
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content')
 ])
 
 index_page = html.Div([
-    dcc.Link('View Price Forecast', href='/price-forecast'),
-    html.Br(),
-
-    dcc.Link('View Price Change Forecast', href='/price-change-forecast'),
-    html.Br(),
-
-    dcc.Link('View Portfolio Analysis', href='/portfolio-analysis'),
-    html.Br(),
+    html.H1('Overview Dashboard'),
 ])
+
+# index_page = html.Div([
+#     dcc.Link('View Price Forecast', href='/price-forecast'),
+#     html.Br(),
+
+#     dcc.Link('View Price Change Forecast', href='/price-change-forecast'),
+#     html.Br(),
+
+#     dcc.Link('View Portfolio Analysis', href='/portfolio-analysis'),
+#     html.Br(),
+# ])
 
 # Update the index
 @app.callback(dash.dependencies.Output('page-content', 'children'),
