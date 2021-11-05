@@ -117,7 +117,7 @@ navbar = dbc.Navbar(
                 dbc.Row(
                     [
                         dbc.Col(
-                            html.Img(src="/assets/img/icon.png", height='100px')),
+                            html.Img(src="/assets/img/icon.png", height='150px')),
                         dbc.Col(dbc.NavbarBrand("On Chain Analytics Dashboard", className='ms-2', 
                                 style={'font-size': "40px"}), style={'verticalAlign': 'left'}),
                     ],
@@ -133,7 +133,7 @@ navbar = dbc.Navbar(
                     }
                 )
             ],
-                style={"textDecoration": "none"},
+                style={"textDecoration": "none", "font-family":"Garamond", "font-weight":600},
             )
         ]
     ),
@@ -152,6 +152,7 @@ app.layout = html.Div([
         # ])
     ],
     ),
+    html.Br(),
     dcc.Location(id='url', refresh=False),
     html.Div(id='page-content')
 ])
