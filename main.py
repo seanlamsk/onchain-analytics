@@ -117,8 +117,8 @@ navbar = dbc.Navbar(
                 dbc.Row(
                     [
                         dbc.Col(
-                            html.Img(src="/assets/img/icon.png", height='50px')),
-                        dbc.Col(dbc.NavbarBrand("On Chain Analytics Dashboard", className='ms-2',
+                            html.Img(src="/assets/img/icon.png", height='100px')),
+                        dbc.Col(dbc.NavbarBrand("On Chain Analytics Dashboard", className='ms-2', 
                                 style={'font-size': "40px"}), style={'verticalAlign': 'left'}),
                     ],
                     align='center',
@@ -137,8 +137,8 @@ navbar = dbc.Navbar(
             )
         ]
     ),
-    color="#0e153d",
-    dark=True,
+    color="#9BC4C4",
+    dark=False,
 )
 
 
