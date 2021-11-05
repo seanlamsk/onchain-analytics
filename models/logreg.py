@@ -63,7 +63,7 @@ for cc_target in targets:
     threshold_shift = 5
     threshold_corr = 0.5
     
-    eligible = reduce(lambda prev,shift: bool( shift+N_PERIOD <= threshold_shift and abs(sorted_corr_shift[shift+N_PERIOD]) >= threshold_corr) , sorted_corr_shift[:top_n])
+    eligible = reduce(lambda prev,shift: bool( shift+N_PERIOD <= threshold_shift and abs(corrs[shift+N_PERIOD]) >= threshold_corr) , sorted_corr_shift[:top_n])
 
     print(f"{variable} eligible? {eligible} , ","Best cross corr shifts: ",sorted_corr_shift[:top_n])
     if eligible:
