@@ -7,7 +7,7 @@ import plotly.express as px
 from dash_core_components import Dropdown, Graph, Slider
 import dash_bootstrap_components as dbc
 import dash_core_components as dcc
-import dash_html_components as html
+from dash import html
 import dash
 import sys
 import re
