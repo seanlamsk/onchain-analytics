@@ -38,6 +38,20 @@ class PriceChangeForecast:
             # print(len(prediction),len(dates_range),date2id)
             self.predictions[k] = (pd.read_csv(f"models/predictions/lstm_price_change_pred_{coin}.csv").to_numpy(), date2id)
         
+            # RF PREDICTIONS
+            r = f'RF-{coin}'
+            prediction_rf = pd.read_csv(f"models/predictions/rf_price_change_pred_{coin}.csv").to_numpy()
+            
+            start_rf = date(2020, 9, 11)
+            end_rf = date(2020, 9, 21)
+            delta_rf = end_rf - start_rf
+            dates_range_rf = pd.date_range(start_rf,end_rf-timedelta(days=1),freq='d').astype(str).to_list()
+            print('dates_range_rf',dates_range_rf)
+            date2id_rf = dict(zip(dates_range_rf,range(0,len(prediction))))
+            print('date2id_rf',date2id_rf)
+            # print(len(prediction),len(dates_range),date2id)
+            self.predictions[r] = (pd.read_csv(f"models/predictions/rf_price_change_pred_{coin}.csv").to_numpy(), date2id_rf)
+        
         #################################
         # HTML ELEMENTS
         #################################
@@ -63,13 +77,20 @@ class PriceChangeForecast:
                 ]
             )
         
+        rf_card = create_card(
+                [
+                    html.H4("Random Forest Model Forecast", id="rf"),
+                    html.H2("...", id="rf-value"),
+                ]
+            )
+
         date_picker_card = create_card(
                 [
                     html.H4("Forecast", id="date_picker_h"),
                     dcc.DatePickerSingle(
                         id='selected-date',
-                        min_date_allowed=start,
-                        max_date_allowed=end-timedelta(days=1),
+                        min_date_allowed=start_rf,
+                        max_date_allowed=end_rf-timedelta(days=1),
                         initial_visible_month=start,
                         date=start
                     ),
@@ -101,7 +122,7 @@ class PriceChangeForecast:
                     dbc.Col([avg_card]), dbc.Col([date_picker_card])
                 ]),
                 dbc.Row([
-                    dbc.Col([lstm_card]), dbc.Col([avg_card])
+                    dbc.Col([lstm_card]), dbc.Col([rf_card])
                 ])
 
             ]),
@@ -117,6 +138,7 @@ class PriceChangeForecast:
         # HTML CALLBACKS
         #################################
 
+# change here to add output for rf-value
         @self.app.callback(
                     Output('selected-coin', 'children'),
                     [Input('pricechange-coin-dropdown', 'value')])
@@ -124,11 +146,19 @@ class PriceChangeForecast:
             return 'Forecast for {}'.format(value.upper())
 
         @self.app.callback(
-                    Output('lstm-value', 'children'),
+                    [
+                        Output('lstm-value', 'children'),
+                        Output('rf-value', 'children')
+                    ],
                     [Input('pricechange-coin-dropdown', 'value'),Input('selected-date', 'date')])
         def select_date(coin,selected_date):
             prediction = self.predictions[f"LSTM-{coin}"][0]
             id_mapping = self.predictions[f"LSTM-{coin}"][1]
             ind = id_mapping[selected_date]
-            return prediction[ind][1].upper()
+            
+            prediction_rf = self.predictions[f"RF-{coin}"][0]
+            id_mapping_rf = self.predictions[f"RF-{coin}"][1]
+            ind_rf = id_mapping_rf[selected_date]
+            print(prediction[ind][1].upper(), prediction_rf[ind_rf][1].upper())
+            return prediction[ind][1].upper(), prediction_rf[ind_rf][1].upper()
 

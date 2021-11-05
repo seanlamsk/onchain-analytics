@@ -1,4 +1,20 @@
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
+import seaborn as sns
+import numpy as np
+import math
+from scipy.stats import norm
+from functools import reduce
+from sklearn import preprocessing
+from keras.utils import np_utils
+from sklearn.model_selection import train_test_split
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.metrics import classification_report
+from sklearn.ensemble import RandomForestClassifier
+import pickle
 
+pred_list = []
 
 for i in range(1,11):
   #GLOBAL PARAMETER
@@ -6,24 +22,8 @@ for i in range(1,11):
   N_PERIOD = i #lookahead target label
   N_BINS = 3 #number of target variable bins
 
-  import pandas as pd
-  import matplotlib.pyplot as plt
-  from matplotlib.ticker import FuncFormatter
-  import seaborn as sns
-  import numpy as np
-  import math
-  from scipy.stats import norm
-  from functools import reduce
-  from sklearn import preprocessing
-  from keras.utils import np_utils
-  from sklearn.model_selection import train_test_split
-  from sklearn.tree import DecisionTreeClassifier
-  from sklearn.metrics import classification_report
-  from sklearn.ensemble import RandomForestClassifier
-  import pickle
-
   df = pd.read_csv('../eth_metrics_raw.csv',index_col="Date")
-
+  new_df = df.copy()
   #target response variable - bin of N period change in future
   df['daily_change'] = df['close'].pct_change(-N_PERIOD)
   # df['target_raw'] = pd.cut(df['daily_change'],N_BINS).astype(str)
@@ -105,8 +105,16 @@ for i in range(1,11):
   # Random Forest model
   rf = RandomForestClassifier(n_estimators = 1000, random_state = 42)
   rf.fit(X_train, y_train)
-  y_pred_rf = rf.predict(X_test)
-  print(classification_report(y_test,y_pred_dt))
+  # y_pred_rf = rf.predict(X_test)
+  # print(classification_report(y_test,y_pred_dt))
+  # predictions to record in csv
+  print('TO BE',new_df.loc['2020-09-10 00:00:00+00:00'][eligible_features].to_numpy())
+  # print('AS IS', df[eligible_features].tail(N_PERIOD+10))
+  ui_pred = rf.predict([new_df.loc['2020-09-10 00:00:00+00:00'][eligible_features].to_numpy()])
+  results = pd.DataFrame(le.inverse_transform(ui_pred))
+  print(results)
+  pred_list.append(results.iloc[0][0])
+  print(pred_list)
 
   # Save model as pickle file
   # pkl_filename = "{}.pkl".format(N_PERIOD)
@@ -116,4 +124,8 @@ for i in range(1,11):
   # # Load from file
   # with open(pkl_filename, 'rb') as file:
   #     pickle_model = pickle.load(file)
+  print('- END -')
 
+pred_df = pd.DataFrame({'predictions': pred_list})
+print(pred_df)
+# pred_df.to_csv('eth.csv')
