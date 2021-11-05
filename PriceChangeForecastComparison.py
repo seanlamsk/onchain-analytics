@@ -29,15 +29,22 @@ class PriceChangeForecastComparison:
 
             # map date to index of test partition
             # test partition start from latest BTC halving: 2020-05-11 to 2020-09-10
-            start = date(2020, 8, 1)
-            end = date(2020, 9, 11)
+            start = date(2020, 9, 11)
+            end = date(2020, 9, 21)
             delta = end - start
             dates_range = pd.date_range(start,end-timedelta(days=1),freq='d').astype(str).to_list()
 
             date2id = dict(zip(dates_range,range(len(prediction)-delta.days,len(prediction),1)))
             # print(len(prediction),len(dates_range),date2id)
             self.predictions[k] = (pd.read_csv(f"models/predictions/lstm_price_change_pred_{coin}.csv").to_numpy(), date2id)
-        
+
+            # RF PREDICTIONS
+            r = f'RF-{coin}'
+            prediction_rf = pd.read_csv(f"models/predictions/rf_price_change_pred_{coin}.csv").to_numpy()
+            date2id_rf = dict(zip(dates_range,range(0,len(prediction_rf))))
+            self.predictions[r] = (prediction_rf, date2id_rf)
+
+
         #################################
         # HTML ELEMENTS
         #################################
@@ -69,35 +76,49 @@ class PriceChangeForecastComparison:
                     html.H2("100", id="lstm-right-value"),
                 ]
             )
-        
-        date_picker_left = create_card(
+
+        rf_left_card = create_card(
                 [
-                    html.H4("Forecast", id="selected-coin-left"),
-                    dcc.DatePickerSingle(
-                        id='selected-date-left',
-                        min_date_allowed=start,
-                        max_date_allowed=end-timedelta(days=1),
-                        initial_visible_month=start,
-                        date=start
-                    ),
+                    html.H4("RF Model Forecast", id="rf-left"),
+                    html.H2("100", id="rf-left-value"),
                 ]
             )
 
-        date_picker_right = create_card(
+        rf_right_card = create_card(
                 [
-                    html.H4("Forecast", id="selected-coin-right"),
-                    dcc.DatePickerSingle(
-                        id='selected-date-right',
-                        min_date_allowed=start,
-                        max_date_allowed=end-timedelta(days=1),
-                        initial_visible_month=start,
-                        date=start
-                    ),
+                    html.H4("RF Model Forecast", id="rf-right"),
+                    html.H2("100", id="rf-right-value"),
                 ]
             )
+        
+        slider_left = create_card(
+            [
+                html.H6('Date of Prediction:'),
+                dcc.Slider(id='date-selector-left',
+                       min=0,
+                       max=9,
+                       marks={i-1: '{}'.format(dates_range[i])
+                              for i in range(1, len(dates_range))},
+                       value=0,
+                       ),
+            ]
+        )
+
+        slider_right = create_card(
+            [
+                html.H6('Date of Prediction:'),
+                dcc.Slider(id='date-selector-right',
+                       min=0,
+                       max=9,
+                       marks={i-1: '{}'.format(dates_range[i])
+                              for i in range(1, len(dates_range))},
+                       value=0,
+                       ),
+            ]
+        )
 
         self.layout = html.Div([
-            html.H1('Price Change Forecast',id='price-change-title'),
+            html.H3('Price Change Forecast',id='price-change-title'),
             html.Br(),
             html.H2('Comparison',id='compare-header'),
             html.Br(),
@@ -120,7 +141,7 @@ class PriceChangeForecastComparison:
                             )
                         ]),
                         dbc.Row([
-                            dbc.Col([date_picker_left])
+                            dbc.Col([slider_left])
                         ])
                     ]),
                     dbc.Col([
@@ -136,7 +157,19 @@ class PriceChangeForecastComparison:
                             )
                         ]),
                         dbc.Row([
-                            dbc.Col([date_picker_right])
+                            dbc.Col([slider_right])
+                        ])
+                    ]),
+                ]),
+                dbc.Row([
+                    dbc.Col([
+                        dbc.Row([
+                            dbc.Col([rf_left_card]), dbc.Col([lstm_left_card])
+                        ])
+                    ]),
+                    dbc.Col([
+                        dbc.Row([
+                            dbc.Col([rf_right_card]), dbc.Col([lstm_right_card])
                         ])
                     ]),
                 ]),
@@ -148,19 +181,7 @@ class PriceChangeForecastComparison:
                     ], style={'text-align': 'center'})
                 ]),
                 html.Br(),
-                html.Br(),
-                dbc.Row([
-                    dbc.Col([
-                        dbc.Row([
-                            dbc.Col([lstm_left_card]), dbc.Col([lstm_left_card])
-                        ])
-                    ]),
-                    dbc.Col([
-                        dbc.Row([
-                            dbc.Col([lstm_right_card]), dbc.Col([lstm_right_card])
-                        ])
-                    ]),
-                ])
+                html.Br()
 
             ]),
             
@@ -191,13 +212,19 @@ class PriceChangeForecastComparison:
             return 'Forecast for {}'.format(value.upper())
 
         @self.app.callback(
-                    Output('lstm-left-value', 'children'),
-                    [Input('pricechange-coin-dropdown-left', 'value'),Input('selected-date-left', 'date')])
-        def select_date(coin,selected_date):
+                    [Output('lstm-left-value', 'children'),  Output('rf-left-value', 'children')],
+                    [Input('pricechange-coin-dropdown-left', 'value'),Input('date-selector-left', 'value')])
+        def select_date(coin,date_index):
+            selected_date = dates_range[date_index]
+
             prediction = self.predictions[f"LSTM-{coin}"][0]
             id_mapping = self.predictions[f"LSTM-{coin}"][1]
             ind = id_mapping[selected_date]
-            return prediction[ind][1].upper()
+
+            prediction_rf = self.predictions[f"RF-{coin}"][0]
+            id_mapping_rf = self.predictions[f"RF-{coin}"][1]
+            ind_rf = id_mapping_rf[selected_date]
+            return prediction[ind][1].upper(), prediction_rf[ind_rf][1].upper()
 
         #################################
         # HTML CALLBACKS RIGHT
@@ -210,11 +237,17 @@ class PriceChangeForecastComparison:
             return 'Forecast for {}'.format(value.upper())
 
         @self.app.callback(
-                    Output('lstm-right-value', 'children'),
-                    [Input('pricechange-coin-dropdown-right', 'value'),Input('selected-date-right', 'date')])
-        def select_date(coin,selected_date):
+                    [Output('lstm-right-value', 'children'), Output('rf-right-value', 'children')],
+                    [Input('pricechange-coin-dropdown-right', 'value'),Input('date-selector-right', 'value')])
+        def select_date(coin,date_index):
+            selected_date = dates_range[date_index]
+
             prediction = self.predictions[f"LSTM-{coin}"][0]
             id_mapping = self.predictions[f"LSTM-{coin}"][1]
             ind = id_mapping[selected_date]
-            return prediction[ind][1].upper()
+
+            prediction_rf = self.predictions[f"RF-{coin}"][0]
+            id_mapping_rf = self.predictions[f"RF-{coin}"][1]
+            ind_rf = id_mapping_rf[selected_date]
+            return prediction[ind][1].upper(), prediction_rf[ind_rf][1].upper()
 
