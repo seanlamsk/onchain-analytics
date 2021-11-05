@@ -9,24 +9,24 @@ from models.LSTM_PricePrediction import LSTMModel
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 coins = ['btc','eth','ltc']
 
-# LSTM change prediction
-# for coin in coins:
-#     model = LSTMPriceChangeModel(f"{coin}_metrics_raw.csv",N_PERIOD=10)
-#     model.init()
-#     model.fit(f"models/saved_models/{coin}/lstm_price_change_{coin}.hp5")
-#     predictions = model.predict(model.X_test,return_label=False)
-#     pd.DataFrame(predictions).to_csv(f"models/predictions/lstm_price_change_pred_{coin}.csv", header=None)
+# LSTM Price change prediction
+for coin in coins:
+    model = LSTMPriceChangeModel(f"{coin}_metrics_raw.csv",N_PERIOD=10)
+    model.init()
+    model.fit(f"models/saved_models/{coin}/lstm_price_change_{coin}.hp5")
+    predictions = model.predict(model.X_test,return_label=False)
+    pd.DataFrame(predictions,index=model.df["2020-05-11":].iloc[:-model.N_PERIOD,:].index).to_csv(f"models/predictions/lstm_price_change_pred_{coin}.csv", header=None)
 
-#     del model
+    del model
 
-
+"""
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 dateparse = lambda dates: pd.datetime.strptime(dates[:dates.find('+')], '%Y-%m-%d %H:%M:%S')
 df_btc = pd.read_csv('btc_metrics_raw.csv', index_col='Date', parse_dates=True, date_parser=dateparse)
 df_eth = pd.read_csv('eth_metrics_raw.csv', index_col='Date', parse_dates=True, date_parser=dateparse)
 df_ltc = pd.read_csv('ltc_metrics_raw.csv', index_col='Date', parse_dates=True, date_parser=dateparse)
 
-# LSTM Price Change
+# LSTM Price Prediction
 def add_into_df (df, input):
     df.loc[-1] = input  # adding a row
     df.index = df.index + 1  # shifting index
@@ -94,7 +94,7 @@ stats_df.to_csv('models/predictions/price_pred_stats.csv')
 
 #------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------
 
-
+"""
 
 
 
