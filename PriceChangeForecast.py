@@ -3,10 +3,10 @@ import dash_bootstrap_components as dbc
 from dash import dcc
 from dash import html
 from dash.dependencies import Input, Output
-from datetime import date
+from dash import dash_table
 from datetime import date, timedelta
 import pandas as pd
-
+import re
 
 class PriceChangeForecast:
 
@@ -60,7 +60,7 @@ class PriceChangeForecast:
         lstm_card = create_card(
                 [
                     html.H4("LSTM Model Forecast", id="lstm"),
-                    html.H2("100", id="lstm-value"),
+                    html.H2("...", id="lstm-value"),
                 ]
             )
         
@@ -74,11 +74,11 @@ class PriceChangeForecast:
         slider_card = create_card(
             [
                 html.H6('Date of Prediction:'),
-                dcc.Slider(id='date-selector',
+                dcc.Slider(id='date-selector-pc',
                        min=0,
                        max=9,
-                       marks={i-1: '{}'.format(dates_range[i])
-                              for i in range(1, len(dates_range))},
+                       marks={i: '{}'.format(dates_range[i])
+                              for i in range(0, len(dates_range))},
                        value=0,
                        ),
             ]
@@ -107,12 +107,20 @@ class PriceChangeForecast:
             # Grid layout
             html.Div([
                 dbc.Row([
-                    dbc.Col([slider_card])
-                ]),
-                dbc.Row([
-                    dbc.Col([lstm_card]), dbc.Col([rf_card])
+                    dbc.Col([
+                        dash_table.DataTable(
+                        id='data-table',
+                        )
+                    ]),
+                    dbc.Col([
+                        dbc.Row([
+                            dbc.Col([slider_card])
+                        ]),
+                        dbc.Row([
+                            dbc.Col([lstm_card]), dbc.Col([rf_card])
+                        ])
+                    ])
                 ])
-
             ]),
             
             
@@ -126,7 +134,38 @@ class PriceChangeForecast:
         # HTML CALLBACKS
         #################################
 
-# change here to add output for rf-value
+        def format_output(label):
+            label = re.sub('[(],]', '', label)
+            l = label.split(" ")[0][1:-1]
+            u = label.split(" ")[1][1:-1]
+            return f"{l}% to {u}%"
+
+        @self.app.callback(
+                    [Output('data-table', 'data'),Output('data-table', 'columns')],
+                    [Input('pricechange-coin-dropdown', 'value')])
+        def update_table(coin):
+            N=10
+
+            lstm_pred = self.predictions[f"LSTM-{coin}"][0]
+            lstm_values = [format_output(i[1]) for i in lstm_pred][-N:]
+            
+            start = date(2020, 9, 11)
+            end = date(2020, 9, 21)
+            dates = pd.date_range(start,end-timedelta(days=1),freq='d').astype(str).to_list()
+
+            rf_pred = self.predictions[f"RF-{coin}"][0]
+            rf_values = [format_output(i[1]) for i in rf_pred][-N:]
+
+            # print(len(lstm_values),len(dates),len(rf_values))
+
+            data = pd.DataFrame({
+                "Dates" : dates,
+                "LSTM": lstm_values,
+                "RF": rf_values
+            })
+            return data.to_dict('records'), [{"name": i, "id": i} for i in data.columns]
+
+            
         @self.app.callback(
                     Output('selected-coin', 'children'),
                     [Input('pricechange-coin-dropdown', 'value')])
@@ -138,7 +177,7 @@ class PriceChangeForecast:
                         Output('lstm-value', 'children'),
                         Output('rf-value', 'children')
                     ],
-                    [Input('pricechange-coin-dropdown', 'value'),Input('date-selector', 'value')])
+                    [Input('pricechange-coin-dropdown', 'value'),Input('date-selector-pc', 'value')])
         def select_date(coin,date_index):
             selected_date = dates_range[date_index]
 
@@ -149,6 +188,5 @@ class PriceChangeForecast:
             prediction_rf = self.predictions[f"RF-{coin}"][0]
             id_mapping_rf = self.predictions[f"RF-{coin}"][1]
             ind_rf = id_mapping_rf[selected_date]
-            # print(prediction[ind][1].upper(), prediction_rf[ind_rf][1].upper())
-            return prediction[ind][1].upper(), prediction_rf[ind_rf][1].upper()
+            return format_output(prediction[ind][1]), format_output(prediction_rf[ind_rf][1])
 

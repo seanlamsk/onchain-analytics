@@ -6,7 +6,7 @@ from dash.dependencies import Input, Output
 from datetime import date
 from datetime import date, timedelta
 import pandas as pd
-
+import re
 
 class PriceChangeForecastComparison:
 
@@ -97,8 +97,8 @@ class PriceChangeForecastComparison:
                 dcc.Slider(id='date-selector-left',
                        min=0,
                        max=9,
-                       marks={i-1: '{}'.format(dates_range[i])
-                              for i in range(1, len(dates_range))},
+                       marks={i: '{}'.format(dates_range[i])
+                              for i in range(0, len(dates_range))},
                        value=0,
                        ),
             ]
@@ -110,8 +110,8 @@ class PriceChangeForecastComparison:
                 dcc.Slider(id='date-selector-right',
                        min=0,
                        max=9,
-                       marks={i-1: '{}'.format(dates_range[i])
-                              for i in range(1, len(dates_range))},
+                       marks={i: '{}'.format(dates_range[i])
+                              for i in range(0, len(dates_range))},
                        value=0,
                        ),
             ]
@@ -194,6 +194,11 @@ class PriceChangeForecastComparison:
         #################################
         # HTML CALLBACKS CENTER
         #################################
+        def format_output(label):
+            label = re.sub('[(],]', '', label)
+            l = label.split(" ")[0][1:-1]
+            u = label.split(" ")[1][1:-1]
+            return f"{l}% to {u}%"
 
         @self.app.callback(
                     Output('compare-header', 'children'),
@@ -224,7 +229,7 @@ class PriceChangeForecastComparison:
             prediction_rf = self.predictions[f"RF-{coin}"][0]
             id_mapping_rf = self.predictions[f"RF-{coin}"][1]
             ind_rf = id_mapping_rf[selected_date]
-            return prediction[ind][1].upper(), prediction_rf[ind_rf][1].upper()
+            return format_output(prediction[ind][1]), format_output(prediction_rf[ind_rf][1])
 
         #################################
         # HTML CALLBACKS RIGHT
@@ -249,5 +254,5 @@ class PriceChangeForecastComparison:
             prediction_rf = self.predictions[f"RF-{coin}"][0]
             id_mapping_rf = self.predictions[f"RF-{coin}"][1]
             ind_rf = id_mapping_rf[selected_date]
-            return prediction[ind][1].upper(), prediction_rf[ind_rf][1].upper()
+            return format_output(prediction[ind][1]), format_output(prediction_rf[ind_rf][1])
 
