@@ -46,8 +46,8 @@ def create_card(html_elements):
 
 def format_pc_output(label):
     label = re.sub('[(],]', '', label)
-    l = label.split(" ")[0][1:-1]
-    u = label.split(" ")[1][1:-1]
+    l = float(label.split(" ")[0][1:-1])
+    u = float(label.split(" ")[1][1:-1])
     return f"{l}% to {u}%"
 
 def price_change_pred(coin):
