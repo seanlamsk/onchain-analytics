@@ -190,7 +190,7 @@ class PriceChangeForecastComparison:
             html.Br(),
 
 
-            dcc.Link('Go back to home', href='/'),
+            # dcc.Link('Go back to home', href='/'),
         ])
         #################################
         # HTML CALLBACKS CENTER
