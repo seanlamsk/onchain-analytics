@@ -8,5 +8,4 @@ result = pd.concat([btc['close'], ltc['close'], eth['close']], axis=1, join="inn
 result.columns = ['btc', 'ltc', 'eth']
 
 correlation = result.corr()
-print(correlation['btc'].loc['btc'])
 # correlation.to_csv('predictions/correlation.csv')

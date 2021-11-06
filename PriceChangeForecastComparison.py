@@ -197,15 +197,15 @@ class PriceChangeForecastComparison:
         #################################
         def format_output(label):
             label = re.sub('[(],]', '', label)
-            l = label.split(" ")[0][1:-1]
-            u = label.split(" ")[1][1:-1]
+            l = float(label.split(" ")[0][1:-1])
+            u = float(label.split(" ")[1][1:-1])
             return f"{l}% to {u}%"
 
         @self.app.callback(
                     [Output('compare-header', 'children'), Output('price-corr-value', 'children')],
                     [Input('pricechange-coin-dropdown-left', 'value'),Input('pricechange-coin-dropdown-right', 'value')])
         def coin_dropdown(coinleft,coinright):
-            return f'Comparison: {coinleft.upper()} vs {coinright.upper()}', self.corrs[coinleft].loc[coinright]
+            return f'Comparison: {coinleft.upper()} vs {coinright.upper()}', round(self.corrs[coinleft].loc[coinright],3)
 
         #################################
         # HTML CALLBACKS LEFT
