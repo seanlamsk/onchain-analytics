@@ -20,6 +20,7 @@ class PriceChangeForecastComparison:
         self.app = app
 
         self.predictions = {}
+        self.corrs = pd.read_csv('models/predictions/correlation.csv', index_col=0)
         
         # Loading trained models
         for coin in ['btc','eth','ltc']:
@@ -58,36 +59,36 @@ class PriceChangeForecastComparison:
 
         corr_card = create_card(
                 [
-                    html.H4("Price Correlation"),
-                    html.H2("100", id="corr-value"),
+                    html.H4("Price Correlation", id="price-corr"),
+                    html.H2("1", id="price-corr-value"),
                 ]
             )
 
         lstm_left_card = create_card(
                 [
                     html.H4("LSTM Model Forecast", id="lstm-left"),
-                    html.H2("100", id="lstm-left-value"),
+                    html.H2("...", id="lstm-left-value"),
                 ]
             )
 
         lstm_right_card = create_card(
                 [
                     html.H4("LSTM Model Forecast", id="lstm-right"),
-                    html.H2("100", id="lstm-right-value"),
+                    html.H2("...", id="lstm-right-value"),
                 ]
             )
 
         rf_left_card = create_card(
                 [
                     html.H4("RF Model Forecast", id="rf-left"),
-                    html.H2("100", id="rf-left-value"),
+                    html.H2("...", id="rf-left-value"),
                 ]
             )
 
         rf_right_card = create_card(
                 [
                     html.H4("RF Model Forecast", id="rf-right"),
-                    html.H2("100", id="rf-right-value"),
+                    html.H2("...", id="rf-right-value"),
                 ]
             )
         
@@ -201,10 +202,10 @@ class PriceChangeForecastComparison:
             return f"{l}% to {u}%"
 
         @self.app.callback(
-                    Output('compare-header', 'children'),
+                    [Output('compare-header', 'children'), Output('price-corr-value', 'children')],
                     [Input('pricechange-coin-dropdown-left', 'value'),Input('pricechange-coin-dropdown-right', 'value')])
         def coin_dropdown(coinleft,coinright):
-            return f'Comparison: {coinleft.upper()} vs {coinright.upper()}'
+            return f'Comparison: {coinleft.upper()} vs {coinright.upper()}', self.corrs[coinleft].loc[coinright]
 
         #################################
         # HTML CALLBACKS LEFT
