@@ -4,6 +4,7 @@ import dash_bootstrap_components as dbc
 from dash import html, dcc
 import plotly.express as px
 import pandas as pd
+import re
 
 from PriceChangeForecast import PriceChangeForecast
 from PriceChangeForecastComparison import PriceChangeForecastComparison
@@ -42,6 +43,23 @@ def create_card(html_elements):
             html_elements
         )
     )
+
+def format_pc_output(label):
+    label = re.sub('[(],]', '', label)
+    l = label.split(" ")[0][1:-1]
+    u = label.split(" ")[1][1:-1]
+    return f"{l}% to {u}%"
+
+def price_change_pred(coin):
+    
+    k = f'LSTM-{coin}'
+    # store prediction from test set in memory
+    prediction = pd.read_csv(f"models/predictions/lstm_price_change_pred_{coin}.csv").to_numpy()
+
+    # RF PREDICTIONS
+    prediction_rf = pd.read_csv(f"models/predictions/rf_price_change_pred_{coin}.csv").to_numpy()
+
+    return format_pc_output(prediction[-1:][0][1]),format_pc_output(prediction_rf[-1:][0][1])
 
 
 arima_card = create_card(
@@ -91,6 +109,53 @@ lstm_card = create_card(
                     html.H4(trend_of_value('ltc', 'LSTM')[0], style={"color": trend_of_value('ltc', 'LSTM')[1]})),
                 ])
     ])
+
+
+rf_pc_card = create_card(
+    [
+        html.H2('RF Price Change Forecast'),
+        dbc.Row([
+                dbc.Col(
+                    html.H4('Bitcoin:')),
+                dbc.Col(
+                    html.H4(price_change_pred('btc')[1])),
+                ]),
+        dbc.Row([
+                dbc.Col(
+                    html.H4('Ethereum:')),
+                dbc.Col(
+                    html.H4(price_change_pred('eth')[1])),
+                ]),
+        dbc.Row([
+                dbc.Col(
+                    html.H4('Litecoin:')),
+                dbc.Col(
+                    html.H4(price_change_pred('ltc')[1])),
+                ])
+])    
+
+lstm_pc_card = create_card(
+    [
+        html.H2('LSTM Price Change Forecast'),
+        dbc.Row([
+                dbc.Col(
+                    html.H4('Bitcoin:')),
+                dbc.Col(
+                    html.H4(price_change_pred('btc')[0])),
+                ]),
+        dbc.Row([
+                dbc.Col(
+                    html.H4('Ethereum:')),
+                dbc.Col(
+                    html.H4(price_change_pred('eth')[0])),
+                ]),
+        dbc.Row([
+                dbc.Col(
+                    html.H4('Litecoin:')),
+                dbc.Col(
+                    html.H4(price_change_pred('ltc')[0])),
+                ])
+])
 
 
 nav = dbc.Nav(
@@ -163,20 +228,13 @@ index_page = html.Div([
         dbc.Row([
             dbc.Col([arima_card]),
             dbc.Col([lstm_card]),
+        ]),
+        dbc.Row([
+            dbc.Col([rf_pc_card]),
+            dbc.Col([lstm_pc_card]),
         ])
     ])
 ])
-
-# index_page = html.Div([
-#     dcc.Link('View Price Forecast', href='/price-forecast'),
-#     html.Br(),
-
-#     dcc.Link('View Price Change Forecast', href='/price-change-forecast'),
-#     html.Br(),
-
-#     dcc.Link('View Portfolio Analysis', href='/portfolio-analysis'),
-#     html.Br(),
-# ])
 
 # Update the index
 
@@ -196,26 +254,6 @@ def display_page(pathname):
         return index_page
     # You could also return a 404 "URL not found" page here
 
-
 if __name__ == '__main__':
     app.run_server(debug=True)
 
-
-# page_2_layout = html.Div([
-#     html.H1('Page 2'),
-#     dcc.RadioItems(
-#         id='page-2-radios',
-#         options=[{'label': i, 'value': i} for i in ['Orange', 'Blue', 'Red']],
-#         value='Orange'
-#     ),
-#     html.Div(id='page-2-content'),
-#     html.Br(),
-#     dcc.Link('Go to Page 1', href='/page-1'),
-#     html.Br(),
-#     dcc.Link('Go back to home', href='/')
-# ])
-
-# @app.callback(dash.dependencies.Output('page-2-content', 'children'),
-#               [dash.dependencies.Input('page-2-radios', 'value')])
-# def page_2_radios(value):
-#     return 'You have selected "{}"'.format(value)
