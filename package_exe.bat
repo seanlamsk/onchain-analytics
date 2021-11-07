@@ -8,4 +8,6 @@ pip install --user matplotlib %*
 pip install --user tensorflow %*
 pip install --user sklearn %*
 pip install --user keras %*
+pip install --user dash_bootstrap_components %*
+pip install --user pmdarima %*
 @pause
