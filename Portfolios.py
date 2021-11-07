@@ -7,9 +7,10 @@ import efficientfrontier
 
 # fig, minvolport, optriskport = efficientfrontier.plotEfficientFrontierfromRawCSV()
 
+
 class Portfolios_Analysis:
 
-    def __init__(self,app):
+    def __init__(self, app):
         self.app = app
         fig, minvolport, optriskport = efficientfrontier.plotEfficientFrontierfromRawCSV()
         btcmvp = minvolport['btc weight'] * 100
@@ -22,10 +23,10 @@ class Portfolios_Analysis:
             dbc.CardBody(
                 [
                     html.H4("Minimum Volatility Portfolio", id="card-title"),
-                    html.Ul(id = "holdingsMVP"),
-                    html.Li("BTC: {}%".format(btcmvp.round(5)), id = "MVPBTC"),
-                    html.Li("ETH: {}%".format(ethmvp.round(5)), id ="MVPETH" ),
-                    html.Li("LTC {}%".format(ltcmvp.round(5)), id = "MVPLTC")
+                    html.Ul(id="holdingsMVP"),
+                    html.Li("BTC: {}%".format(btcmvp.round(3)), id="MVPBTC"),
+                    html.Li("ETH: {}%".format(ethmvp.round(3)), id="MVPETH"),
+                    html.Li("LTC {}%".format(ltcmvp.round(3)), id="MVPLTC")
                 ]
             )
         )
@@ -34,16 +35,16 @@ class Portfolios_Analysis:
             dbc.CardBody(
                 [
                     html.H4("Optimal Returns Portfolio", id="card-title2"),
-                    html.Ul(id = "holdingsORP"),
-                    html.Li("BTC: {}%".format(btcorp.round(5)), id = "ORPBTC"),
-                    html.Li("ETH: {}%".format(ethorp.round(5)), id = "ORPETH"),
-                    html.Li("LTC {}%".format(ltcorp.round(5)), id = "ORPLTC")
+                    html.Ul(id="holdingsORP"),
+                    html.Li("BTC: {}%".format(btcorp.round(3)), id="ORPBTC"),
+                    html.Li("ETH: {}%".format(ethorp.round(3)), id="ORPETH"),
+                    html.Li("LTC {}%".format(ltcorp.round(3)), id="ORPLTC")
                 ]
             )
         )
 
         self.layout = html.Div([
-            html.H1('Portfolio Analysis',id='price-change-title'),
+            html.H1('Portfolio Analysis', id='price-change-title'),
             html.Br(),
             html.Div([
                 dbc.Row([
@@ -52,17 +53,17 @@ class Portfolios_Analysis:
             ]),
             html.Br(),
             html.Br(),
-            dcc.Graph(figure = fig),
-            
-            
+            dcc.Graph(figure=fig),
+
+
             html.Br(),
 
 
-            dcc.Link('Go back to home', href='/'),
+            # dcc.Link('Go back to home', href='/'),
         ])
 
         @self.app.callback(
-                    Output('selected-portfolio', 'children'),
-                    [Input('portfolio', 'value')])
+            Output('selected-portfolio', 'children'),
+            [Input('portfolio', 'value')])
         def portfolio(value):
             return 'Forecast for {}'.format(value.upper())

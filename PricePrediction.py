@@ -125,9 +125,9 @@ class PricePrediction:
                         )
                     ),
                     dbc.Col([
-                        html.H6('Price Threshold'),
+                        html.H6('Plot Price Level: '),
                         dbc.Input(
-                            id='threshold', placeholder='Enter Threshold', type='text', debounce=True),
+                            id='threshold', placeholder='Enter Price Level', type='text', debounce=True),
                     ])
                 ])
             ]
