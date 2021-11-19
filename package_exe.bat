@@ -10,4 +10,5 @@ pip install --user sklearn %*
 pip install --user keras %*
 pip install --user dash_bootstrap_components %*
 pip install --user pmdarima %*
+pip install --user pandas_datareader %*
 @pause
