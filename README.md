@@ -4,7 +4,7 @@ SMU 2021 Term 2 IS453 Financial Analytics Class Project
 
 ![Dashboard Screenshot](https://github.com/seanlamsk/onchain-analytics/blob/main/readme-screenshot.JPG?raw=true)
 
-This project is a proof of concept demonstrating application of using on-chain data, coupled with time forecasting models (such as LSTMs) in an attempt to predict cryptocurrency price action. On Chain data is sourced from the public data provide Glass Node.
+This project is a proof of concept demonstrating application of using on-chain data, coupled with time forecasting models (such as LSTMs) in an attempt to predict cryptocurrency price action. On-chain data is sourced from the public data provider GlassNode.
 
 An interactive GUI dashboard was also created to demonstrate forecasted prediction, as well as additional supplementary analysis.
 
