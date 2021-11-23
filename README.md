@@ -1,6 +1,6 @@
 # Cryptocurrency Price Forecasting using On Chain Analysis
 
-2021 SMU IS453 Financial Analytics Class Project
+SMU 2021 Term 2 IS453 Financial Analytics Class Project
 
 This projects is a proof of concept demonstrating application of using on-chain data, coupled with time forecasting models (LSTMs) in an attempt to predict cryptocurrency price action. On Chain data is sourced from the public data provide Glass Node.
 
